@@ -6,6 +6,7 @@ import requests
 import shutil
 import schedule
 import datetime
+import logging
 
 IP = os.environ.get("espcamip", "192.168.1.111")
 REQUEST_FORMAT = "http://{}/{}".format(IP, "{}")
@@ -22,6 +23,7 @@ SIZE = os.environ.get("size", "8")
 MAX_SIZE_BYTES = 60000
 # If an image is this small we can probably afford to increase the quality
 MIN_SIZE_BYTES = 40000
+logging.basicConfig(level=logging.INFO)
 
 class timelapser():
     def __init__(self, quality):
@@ -41,7 +43,7 @@ class timelapser():
                 size = len(image)
                 if size >= MAX_SIZE_BYTES:
                     self.quality += 1
-                    print("Got a max-size image. Reducing quality to {} to compensate.".format(self.quality))
+                    logging.info("Got a max-size image. Reducing quality to {} to compensate.".format(self.quality))
                     time.sleep(1)
                     # Free up this RAM for the recursion. There's no point keeping it around.
                     del image
@@ -51,18 +53,15 @@ class timelapser():
                 else:
                     if size <= MIN_SIZE_BYTES:
                         self.quality -= 1
-                        print("Got a min-size image. increasing quality to {} for the next image.".format(self.quality))
+                        logging.info("Got a min-size image. increasing quality to {} for the next image.".format(self.quality))
                     with open(filename, 'wb') as f:
                         written = f.write(image)
-                        print("Saved image to {}, {} bytes".format(filename, written))
+                        logging.info("Saved image to {}, {} bytes".format(filename, written))
         except Exception as e:
-            print("Failed to save image: {}".format(e))
+            logging.error("Failed to save image: {}".format(e))
 
     def main(self):
-        startup_log = "Timelapsing from IP:{}, PATH_PREFIX:{}, QUALITY_START:{}, SIZE:{}".format(IP, PATH_PREFIX, QUALITY_START, SIZE)
-        print(startup_log)
-        with open(PATH_PREFIX+"debug.txt", "w") as f:
-            f.write(startup_log)
+        logging.info("Timelapsing from IP:{}, PATH_PREFIX:{}, QUALITY_START:{}, SIZE:{}".format(IP, PATH_PREFIX, QUALITY_START, SIZE))
         self.get_frame()
         schedule.every(TIMELAPSE_INTERVAL_MIN).minutes.do(self.get_frame)
         while True:

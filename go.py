@@ -10,7 +10,7 @@ import logging
 
 IP = os.environ.get("espcamip", "192.168.1.111")
 REQUEST_FORMAT = "http://{}/{}".format(IP, "{}")
-TIMELAPSE_INTERVAL_MIN = 5
+TIMELAPSE_INTERVAL_SEC = int(os.environ.get("interval_sec", 5*60))
 PATH_PREFIX = os.environ.get("pathprefix", "")
 # This is the starting quality. It will ramp up, reducing the quality,
 # until the images from the camera are consistently less than MAX_SIZE_BYTES, because
@@ -34,8 +34,11 @@ class timelapser():
         filename = "{}{}_{}.jpg".format(PATH_PREFIX, time_string, self.quality)
         try:
             r = requests.get(REQUEST_FORMAT.format("control?var=vflip&val={}".format(0)))
+            time.sleep(1)
             r = requests.get(REQUEST_FORMAT.format("control?var=quality&val={}".format(self.quality)))
+            time.sleep(1)
             r = requests.get(REQUEST_FORMAT.format("control?var=framesize&val={}".format(SIZE)))
+            time.sleep(1)
             r = requests.get(REQUEST_FORMAT.format("capture"), stream=True)
             if r.status_code == 200:
                 image = r.content
@@ -62,7 +65,7 @@ class timelapser():
     def main(self):
         logging.info("Timelapsing from IP:{}, PATH_PREFIX:{}, QUALITY_START:{}, SIZE:{}".format(IP, PATH_PREFIX, QUALITY_START, SIZE))
         self.get_frame()
-        schedule.every(TIMELAPSE_INTERVAL_MIN).minutes.do(self.get_frame)
+        schedule.every(TIMELAPSE_INTERVAL_SEC).seconds.do(self.get_frame)
         while True:
             schedule.run_pending()
             time.sleep(1)

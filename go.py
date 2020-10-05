@@ -24,6 +24,8 @@ MAX_SIZE_BYTES = 60000
 # If an image is this small we can probably afford to increase the quality
 MIN_SIZE_BYTES = 40000
 logging.basicConfig(level=logging.INFO)
+MIN_QUALITY = 63
+MAX_QUALITY = 10
 
 class timelapser():
     def __init__(self, quality):
@@ -45,6 +47,8 @@ class timelapser():
                 size = len(image)
                 if size >= MAX_SIZE_BYTES:
                     self.quality += 1
+                    if self.quality > MIN_QUALITY:
+                        self.quality = MIN_QUALITY
                     logging.info("Got a max-size image. Reducing quality to {} to compensate.".format(self.quality))
                     time.sleep(1)
                     # Free up this RAM for the recursion. There's no point keeping it around.
@@ -55,6 +59,8 @@ class timelapser():
                 else:
                     if size <= MIN_SIZE_BYTES:
                         self.quality -= 1
+                        if self.quality < MAX_QUALITY:
+                            self.quality = MAX_QUALITY
                         logging.info("Got a min-size image. increasing quality to {} for the next image.".format(self.quality))
                     with open(filename, 'wb') as f:
                         written = f.write(image)

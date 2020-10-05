@@ -30,9 +30,8 @@ class timelapser():
         self.quality = quality
 
     def get_frame(self):
-        filename = "{}{}.jpg".format(PATH_PREFIX, datetime.datetime.now().isoformat())
-        # Thanks, windows.
-        filename = filename.replace(":",".")
+        time_string = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=10))).strftime("%Y-%m-%dT%H.%M.%S")
+        filename = "{}{}_{}.jpg".format(PATH_PREFIX, time_string, self.quality)
         try:
             r = requests.get(REQUEST_FORMAT.format("control?var=vflip&val={}".format(0)))
             r = requests.get(REQUEST_FORMAT.format("control?var=quality&val={}".format(self.quality)))

@@ -26,6 +26,9 @@ MIN_SIZE_BYTES = 40000
 logging.basicConfig(level=logging.INFO)
 MIN_QUALITY = 63
 MAX_QUALITY = 10
+REQUEST_TIMEOUT_S = 0.5
+
+SETTINGS = {"brightness":0,"contrast":0,"saturation":0,"sharpness":0,"special_effect":0,"wb_mode":0,"awb":1,"awb_gain":1,"aec":1,"aec2":1,"ae_level":0,"aec_value":168,"agc":1,"agc_gain":0,"gainceiling":0,"bpc":0,"wpc":1,"raw_gma":1,"lenc":1,"vflip":0,"hmirror":0,"dcw":1,"colorbar":0,"face_detect":0,"face_enroll":0,"face_recognize":0}
 
 class timelapser():
     def __init__(self, quality):
@@ -35,15 +38,14 @@ class timelapser():
         time_string = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=10))).strftime("%Y-%m-%dT%H.%M.%S")
         filename = "{}{}_{}.jpg".format(PATH_PREFIX, time_string, self.quality)
         try:
-            r = requests.get(REQUEST_FORMAT.format("control?var=hmirror&val={}".format(0)))
-            time.sleep(1)
-            r = requests.get(REQUEST_FORMAT.format("control?var=vflip&val={}".format(0)))
-            time.sleep(1)
-            r = requests.get(REQUEST_FORMAT.format("control?var=quality&val={}".format(self.quality)))
-            time.sleep(1)
-            r = requests.get(REQUEST_FORMAT.format("control?var=framesize&val={}".format(SIZE)))
-            time.sleep(1)
-            r = requests.get(REQUEST_FORMAT.format("capture"), stream=True)
+            for key, value in SETTINGS.items():
+                r = requests.get(REQUEST_FORMAT.format("control?var={}&val={}".format(key, value)), timeout=REQUEST_TIMEOUT_S)
+                time.sleep(0.5)
+            r = requests.get(REQUEST_FORMAT.format("control?var=quality&val={}".format(self.quality)), timeout=REQUEST_TIMEOUT_S)
+            time.sleep(0.5)
+            r = requests.get(REQUEST_FORMAT.format("control?var=framesize&val={}".format(SIZE)), timeout=REQUEST_TIMEOUT_S)
+            time.sleep(0.5)
+            r = requests.get(REQUEST_FORMAT.format("capture"), stream=True, timeout=REQUEST_TIMEOUT_S)
             if r.status_code == 200:
                 image = r.content
                 size = len(image)
